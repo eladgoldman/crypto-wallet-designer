@@ -3,8 +3,6 @@
 pragma solidity ^0.8.3;
 
 import "../github/OpenZeppelin/openzeppelin-contracts/contracts/access/Ownable.sol";
-import "./SignatureBox.sol";
-import "./MultipleSignaturesBox.sol";
 
 /* Signature Verification
 
