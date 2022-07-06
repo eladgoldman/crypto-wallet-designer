@@ -6,29 +6,49 @@ import "./VerifySignature.sol";
 /* This box requires a pair of message and a vaild signature, according to the 
    publicKey address it was constructed with. */
 contract SignatureBox {
+    uint256 counter;
     address publicKey;
     VerifySignature verifier;
 
     constructor(address _publicKey) {
+        counter = 1;
         publicKey = _publicKey;
         verifier = new VerifySignature();
     }
 
-    modifier onlyWithSiganture(string memory _message, bytes memory _signature) {
-        require(verifier.verify(publicKey, _message, _signature), "Wrong signature");
+    modifier onlyWithSiganture(bytes memory _signature) {
+        string memory challenge = generateChallenge();
+        require(verifier.verify(publicKey, challenge, _signature), "Wrong signature");
+        increaseCounter();
         _;
+    }
+
+    function getChallenge() public view returns (string memory) {
+        return generateChallenge();
     }
 
     function deposit() public payable {}
 
-    function withdraw(string memory _message, bytes memory _signature)
-        public payable onlyWithSiganture(_message, _signature) {
+    function withdraw(bytes memory _signature)
+        public payable onlyWithSiganture(_signature) {
         (bool sent, bytes memory data) = msg.sender.call{value: msg.value}("");
         require(sent, "Failed to send Ether");
     }
 
-    function getBalance(string memory _message, bytes memory _signature)
-        public view onlyWithSiganture(_message, _signature) returns (uint) {
+    function getBalance(bytes memory _signature)
+        public onlyWithSiganture(_signature) returns (uint) {
         return address(this).balance;
+    }
+
+    function generateChallenge() private view returns (string memory) {
+        bytes memory self_address = abi.encodePacked(address(this));
+        bytes memory counter_bytes = abi.encodePacked(counter);
+
+        string memory challenge = string(bytes.concat(self_address, counter_bytes));
+        return challenge;
+    }
+
+    function increaseCounter() private {
+        counter = counter + 1;
     }
 }
